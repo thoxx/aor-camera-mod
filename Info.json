@@ -1,0 +1,9 @@
+﻿{
+  "Id": "CameraMod",
+  "Version": "0.1.1",
+  "DisplayName": "Camera Mod",
+  "Author": "thoxx",
+  "EntryMethod": "CameraMod.Main.Load",
+  "HomePage": "https://github.com/thoxx/aor-camera-mod",
+  "Repository": "https://raw.githubusercontent.com/newman55/unity-mods/master/kingmaker/Repository.json"
+}
