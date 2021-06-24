@@ -13,7 +13,7 @@ namespace CameraMod
         private static Rect _labelRect = new Rect(70, 40, 200, 200);
         private static List<CameraAngle> _cameraAngles;
         private static List<CameraAngle> _cameraAnglesOriginals;
-        private static LoadingScreen loadingScreen;
+        private static SceneryManager sceneryManager;
 
         // Send a response to the mod manager about the launch status, success or not.
         static bool Load(UnityModManager.ModEntry modEntry)
@@ -28,24 +28,25 @@ namespace CameraMod
 
         static void OnUpdate(UnityModManager.ModEntry modEntry, float dt)
         {
-            // wait for loading screen
-            if(loadingScreen == null)
+            // wait for sceneryManager
+            if(sceneryManager == null)
             {
-                loadingScreen = UnityEngine.Object.FindObjectOfType<LoadingScreen>();
-            }
-            // check if ActiveRally state changes in the game
-            if(loadingScreen != null && loadingScreen.RallyInfo.activeInHierarchy!= GameState.IsActiveRally)
-            {
-                GameState.IsActiveRally = loadingScreen.RallyInfo.activeInHierarchy;
-                modEntry.Logger.Log($"Active Rally State changed: {GameState.IsActiveRally}");
-                // reset mod if rally is not active
-                if(!GameState.IsActiveRally)
-                {
+                if(GameState.IsActiveRally)
+                {                    
+                    GameState.IsActiveRally = false;
+                    modEntry.Logger.Log($"Active Rally State changed: {GameState.IsActiveRally}");
                     modEntry.Logger.Log("Camera Mod uninitalized");
                     ModState.IsInitalized = false;
                     ModState.IsCameraEditor = false;
                 }
-            }            
+                sceneryManager = UnityEngine.Object.FindObjectOfType<SceneryManager>();
+            }
+            // check if ActiveRally state changes in the game
+            if(sceneryManager != null && !GameState.IsActiveRally)
+            {
+                GameState.IsActiveRally = true;
+                modEntry.Logger.Log($"Active Rally State changed: {GameState.IsActiveRally}");
+            }
             if (GameState.IsActiveRally && !ModState.IsInitalized)
             {
                 InitCams(modEntry);
