@@ -14,13 +14,17 @@ namespace CameraMod
         private static List<CameraAngle> _cameraAngles;
         private static List<CameraAngle> _cameraAnglesOriginals;
         private static SceneryManager sceneryManager;
+        public static Settings settings;
 
         // Send a response to the mod manager about the launch status, success or not.
         static bool Load(UnityModManager.ModEntry modEntry)
         {
             mod = modEntry;
+            settings = Settings.Load<Settings>(modEntry);
             modEntry.OnUpdate = OnUpdate;
             modEntry.OnFixedGUI = OnFixedGUI;
+            modEntry.OnGUI = OnGUI;
+            modEntry.OnSaveGUI = OnSaveGUI;
             modEntry.Logger.Log("Camera Mod loaded but not initalized");
             
             return true; // If false the mod will show an error.
@@ -63,7 +67,7 @@ namespace CameraMod
             if(ModState.IsInitalized)
             {
                 //Enable Camera Editor (only if not in Photo Mode)
-                if (Input.GetKeyUp(KeyCode.KeypadDivide) && !GameState.IsInPhotoMode)
+                if (Input.GetKeyUp(settings.CameraEditor.keyCode) && !GameState.IsInPhotoMode)
                 {
                     ModState.IsCameraEditor = !ModState.IsCameraEditor;
                 }
@@ -73,43 +77,43 @@ namespace CameraMod
                 bool isKeyPressed = false;
                 int camIndex = (int)_camera.CurrentCameraAngle.cameraType;
                 // -Height
-                if (Input.GetKeyUp(KeyCode.Keypad0))
+                if (Input.GetKeyUp(settings.HeightMinus.keyCode))
                 {
                     _cameraAngles[camIndex].height -= 0.5f;
                     isKeyPressed = true;
                 }
                 // +Height
-                if (Input.GetKeyUp(KeyCode.Keypad1))
+                if (Input.GetKeyUp(settings.HeightPlus.keyCode))
                 {
                     _cameraAngles[camIndex].height += 0.5f;
                     isKeyPressed = true;
                 }
                 // -Distance
-                if (Input.GetKeyUp(KeyCode.Keypad2))
+                if (Input.GetKeyUp(settings.DistanceMinus.keyCode))
                 {
                     _cameraAngles[camIndex].distance -= 0.5f;
                     isKeyPressed = true;
                 }
                 // +Distance
-                if (Input.GetKeyUp(KeyCode.Keypad3))
+                if (Input.GetKeyUp(settings.DistancePlus.keyCode))
                 {
                     _cameraAngles[camIndex].distance += 0.5f;
                     isKeyPressed = true;
                 }
                 // -Angle
-                if (Input.GetKeyUp(KeyCode.Keypad4))
+                if (Input.GetKeyUp(settings.AngleMinus.keyCode))
                 {
                     _cameraAngles[camIndex].initialPitchAngle -= 0.5f;
                     isKeyPressed = true;
                 }
                 // +Angle
-                if (Input.GetKeyUp(KeyCode.Keypad7))
+                if (Input.GetKeyUp(settings.AnglePlus.keyCode))
                 {
                     _cameraAngles[camIndex].initialPitchAngle += 0.5f;
                     isKeyPressed = true;
                 }
                 // Reset Camera
-                if (Input.GetKeyUp(KeyCode.KeypadMultiply))
+                if (Input.GetKeyUp(settings.ResetCamera.keyCode))
                 {
                     _cameraAngles[camIndex].distance = _cameraAnglesOriginals[camIndex].distance;
                     _cameraAngles[camIndex].height = _cameraAnglesOriginals[camIndex].height;
@@ -123,6 +127,21 @@ namespace CameraMod
                     _camera.height = _cameraAngles[camIndex].height;
                     _camera.initialPitchAngle = _cameraAngles[camIndex].initialPitchAngle;
                     _camera.SetToWantedPositionImmediate();
+                    switch(camIndex)
+                    {
+                        case 8:
+                            settings.Camera8Distance = _cameraAngles[camIndex].distance;
+                            settings.Camera8Height = _cameraAngles[camIndex].height;
+                            settings.Camera8Angle = _cameraAngles[camIndex].initialPitchAngle;
+                            settings.Save(modEntry);
+                            break;
+                        case 9:
+                            settings.Camera9Distance = _cameraAngles[camIndex].distance;
+                            settings.Camera9Height = _cameraAngles[camIndex].height;
+                            settings.Camera9Angle = _cameraAngles[camIndex].initialPitchAngle;
+                            settings.Save(modEntry);
+                            break;
+                    }
                 }
             }
         }
@@ -138,14 +157,14 @@ namespace CameraMod
                     $"Distance: { _camera.distance}\n" +
                     $"Pitch Angle: { _camera.initialPitchAngle}\n" +
                     $"\n" +
-                    $"KeyPad 0: Height -0.5\n" +
-                    $"KeyPad 1: Height +0.5\n" +
-                    $"KeyPad 2: Distance -0.5\n" +
-                    $"KeyPad 3: Distance +0.5\n" +
-                    $"KeyPad 4: Pitch Angle -0.5\n" +
-                    $"KeyPad 7: Pitch Angle +0.5\n" +
+                    $"{settings.HeightMinus.keyCode}: Height -0.5\n" +
+                    $"{settings.HeightPlus.keyCode}: Height +0.5\n" +
+                    $"{settings.DistanceMinus.keyCode}: Distance -0.5\n" +
+                    $"{settings.DistancePlus.keyCode}: Distance +0.5\n" +
+                    $"{settings.AngleMinus.keyCode}: Pitch Angle -0.5\n" +
+                    $"{settings.AnglePlus.keyCode}: Pitch Angle +0.5\n" +
                     $"\n" +
-                    $"KeyPad *: Reset Camera");
+                    $"{settings.ResetCamera.keyCode}: Reset Camera");
             }
         }
 
@@ -171,12 +190,40 @@ namespace CameraMod
 
                 //Deep Copy original cameras
                 _cameraAnglesOriginals = _cameraAngles.ConvertAll(camera => new CameraAngle(camera.distance, camera.height, camera.initialPitchAngle, camera.cameraType));
+                Main.LoadCamerasFromSettings();
+                modEntry.Logger.Log("Initialized cameras and loaded cameras from settings");
             }
             prop.SetValue(_camera, _cameraAngles);
 
             modEntry.Logger.Log("Camera Mod initalized");
 
             ModState.IsInitalized = true;
+        }
+
+        public static void ApplySettings()
+        {
+            // TODO: apply camera settings
+        }
+
+        static void OnGUI(UnityModManager.ModEntry modEntry)
+        {
+            settings.Draw(modEntry);
+        }
+
+        static void OnSaveGUI(UnityModManager.ModEntry modEntry)
+        {
+            settings.Save(modEntry);
+        }
+
+        static void LoadCamerasFromSettings()
+        {
+            _cameraAngles[8].distance = settings.Camera8Distance;
+            _cameraAngles[8].height = settings.Camera8Height;
+            _cameraAngles[8].initialPitchAngle = settings.Camera8Angle;
+
+            _cameraAngles[9].distance = settings.Camera9Distance;
+            _cameraAngles[9].height = settings.Camera9Height;
+            _cameraAngles[9].initialPitchAngle = settings.Camera9Angle;
         }
     }
 }
