@@ -123,10 +123,8 @@ namespace CameraMod
                 // Update Current Cam
                 if (isKeyPressed)
                 {
-                    _camera.distance = _cameraAngles[camIndex].distance;
-                    _camera.height = _cameraAngles[camIndex].height;
-                    _camera.initialPitchAngle = _cameraAngles[camIndex].initialPitchAngle;
-                    _camera.SetToWantedPositionImmediate();
+                    Main.UpdateCamera(camIndex);
+                    // if custom camera is active -> save changed settings to mod settings
                     switch(camIndex)
                     {
                         case 8:
@@ -200,21 +198,54 @@ namespace CameraMod
             ModState.IsInitalized = true;
         }
 
-        public static void ApplySettings()
+        /// <summary>
+        /// Update camera to a given index
+        /// </summary>
+        /// <param name="camIndex"></param>
+        private static void UpdateCamera(int camIndex)
         {
-            // TODO: apply camera settings
+            _camera.distance = _cameraAngles[camIndex].distance;
+            _camera.height = _cameraAngles[camIndex].height;
+            _camera.initialPitchAngle = _cameraAngles[camIndex].initialPitchAngle;
+            _camera.SetToWantedPositionImmediate();
         }
 
+        /// <summary>
+        /// Apply saved mod settings to mod
+        /// </summary>
+        public static void ApplySettings()
+        {
+            // load changed camera settings from mod settings
+            Main.LoadCamerasFromSettings();
+            // if current camera is a custom camera -> update current camera
+            int camIndex = (int)_camera.CurrentCameraAngle.cameraType;
+            if(camIndex > 7)
+            {
+                UpdateCamera(camIndex);
+            }
+        }
+
+        /// <summary>
+        /// Mod menu GUI
+        /// </summary>
+        /// <param name="modEntry"></param>
         static void OnGUI(UnityModManager.ModEntry modEntry)
         {
             settings.Draw(modEntry);
         }
 
+        /// <summary>
+        /// Save Mod Menu settings
+        /// </summary>
+        /// <param name="modEntry"></param>
         static void OnSaveGUI(UnityModManager.ModEntry modEntry)
         {
             settings.Save(modEntry);
         }
 
+        /// <summary>
+        /// Load camera settings from saved mod settings
+        /// </summary>
         static void LoadCamerasFromSettings()
         {
             _cameraAngles[8].distance = settings.Camera8Distance;
