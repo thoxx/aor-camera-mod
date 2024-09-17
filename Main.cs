@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityModManagerNet;
+using static CameraAngle;
 
 namespace CameraMod
 {
     static class Main
     {
         public static UnityModManager.ModEntry mod;
+        private static int lastCameryType;
         private static CarCameras _camera;
         private static Rect _labelRect = new Rect(70, 40, 200, 200);
         private static List<CameraAngle> _cameraAngles;
@@ -33,7 +35,7 @@ namespace CameraMod
         static void OnUpdate(UnityModManager.ModEntry modEntry, float dt)
         {
             // wait for sceneryManager
-            if(sceneryManager == null)
+            if (sceneryManager == null)
             {
                 if(GameState.IsActiveRally)
                 {                    
@@ -79,37 +81,49 @@ namespace CameraMod
                 // -Height
                 if (Input.GetKeyUp(settings.HeightMinus.keyCode))
                 {
-                    _cameraAngles[camIndex].height -= 0.5f;
+                    _cameraAngles[camIndex].height -= 0.25f;
                     isKeyPressed = true;
                 }
                 // +Height
                 if (Input.GetKeyUp(settings.HeightPlus.keyCode))
                 {
-                    _cameraAngles[camIndex].height += 0.5f;
+                    _cameraAngles[camIndex].height += 0.25f;
                     isKeyPressed = true;
                 }
                 // -Distance
                 if (Input.GetKeyUp(settings.DistanceMinus.keyCode))
                 {
-                    _cameraAngles[camIndex].distance -= 0.5f;
+                    _cameraAngles[camIndex].distance -= 0.25f;
                     isKeyPressed = true;
                 }
                 // +Distance
                 if (Input.GetKeyUp(settings.DistancePlus.keyCode))
                 {
-                    _cameraAngles[camIndex].distance += 0.5f;
+                    _cameraAngles[camIndex].distance += 0.25f;
                     isKeyPressed = true;
                 }
                 // -Angle
                 if (Input.GetKeyUp(settings.AngleMinus.keyCode))
                 {
-                    _cameraAngles[camIndex].initialPitchAngle -= 0.5f;
+                    _cameraAngles[camIndex].initialPitchAngle -= 0.25f;
                     isKeyPressed = true;
                 }
                 // +Angle
                 if (Input.GetKeyUp(settings.AnglePlus.keyCode))
                 {
-                    _cameraAngles[camIndex].initialPitchAngle += 0.5f;
+                    _cameraAngles[camIndex].initialPitchAngle += 0.25f;
+                    isKeyPressed = true;
+                }
+                // -Damping
+                if(Input.GetKeyUp(settings.DampingMinus.keyCode))
+                {
+                    _camera.heightDamping -= 0.25f;
+                    isKeyPressed = true;
+                }
+                // +Damping
+                if (Input.GetKeyUp(settings.DampingPlus.keyCode))
+                {
+                    _camera.heightDamping += 0.25f;
                     isKeyPressed = true;
                 }
                 // Reset Camera
@@ -118,6 +132,15 @@ namespace CameraMod
                     _cameraAngles[camIndex].distance = _cameraAnglesOriginals[camIndex].distance;
                     _cameraAngles[camIndex].height = _cameraAnglesOriginals[camIndex].height;
                     _cameraAngles[camIndex].initialPitchAngle = _cameraAnglesOriginals[camIndex].initialPitchAngle;
+                    if(camIndex > 7)
+                    {
+                        _camera.heightDamping = 4.0f;
+                    }
+                    else
+                    {
+                        // default for game cams
+                        _camera.heightDamping = 2.0f;
+                    }
                     isKeyPressed = true;
                 }
                 // Update Current Cam
@@ -131,16 +154,38 @@ namespace CameraMod
                             settings.Camera8Distance = _cameraAngles[camIndex].distance;
                             settings.Camera8Height = _cameraAngles[camIndex].height;
                             settings.Camera8Angle = _cameraAngles[camIndex].initialPitchAngle;
+                            settings.Camera8Damping = _camera.heightDamping;
                             settings.Save(modEntry);
                             break;
                         case 9:
                             settings.Camera9Distance = _cameraAngles[camIndex].distance;
                             settings.Camera9Height = _cameraAngles[camIndex].height;
                             settings.Camera9Angle = _cameraAngles[camIndex].initialPitchAngle;
+                            settings.Camera8Damping = _camera.heightDamping;
                             settings.Save(modEntry);
                             break;
                     }
                 }
+            }
+            // check if camera has changed, to apply height damping to custom mod cams
+            if (_camera?.CurrentCameraAngle?.cameraType != null && ((int)_camera.CurrentCameraAngle.cameraType != lastCameryType))
+            {
+                int camIndex = (int)_camera.CurrentCameraAngle.cameraType;
+                modEntry.Logger.Log($"Camera switched from {lastCameryType} to {camIndex}");
+                switch(camIndex)
+                {
+                    case 8:
+                        _camera.heightDamping = settings.Camera8Damping;
+                        break;
+                    case 9:
+                        _camera.heightDamping = settings.Camera9Damping;
+                        break;
+                    default:
+                        _camera.heightDamping = 2.0f;
+                        break;
+                }
+
+                lastCameryType = (int)_camera.CurrentCameraAngle.cameraType;
             }
         }
 
@@ -149,18 +194,32 @@ namespace CameraMod
             // show camera values when editor is enabled
             if (ModState.IsCameraEditor)
             {
+                int camIndex = (int)_camera.CurrentCameraAngle.cameraType;
+                // show different label for current camera, when one of the mod cams is active in cam editor
+                string cameraLabel = $"Current Camera: Game Cam {(int)_camera.CurrentCameraAngle.cameraType + 1}\n";
+                if (camIndex == 8)
+                {
+                    cameraLabel = "Current Camera: Mod Camera 1\n";
+                }
+                else if(camIndex == 9)
+                {
+                    cameraLabel = "Current Camera: Mod Camera 2\n";
+                }
                 GUI.Label(_labelRect, $"Camera Editor\n" +
-                    $"Current Camera: {(int)_camera.CurrentCameraAngle.cameraType}\n" +
+                    cameraLabel +
                     $"Height: {_camera.height}\n" +
                     $"Distance: { _camera.distance}\n" +
                     $"Pitch Angle: { _camera.initialPitchAngle}\n" +
+                    $"Height Damping: {_camera.heightDamping}\n" +
                     $"\n" +
-                    $"{settings.HeightMinus.keyCode}: Height -0.5\n" +
-                    $"{settings.HeightPlus.keyCode}: Height +0.5\n" +
-                    $"{settings.DistanceMinus.keyCode}: Distance -0.5\n" +
-                    $"{settings.DistancePlus.keyCode}: Distance +0.5\n" +
-                    $"{settings.AngleMinus.keyCode}: Pitch Angle -0.5\n" +
-                    $"{settings.AnglePlus.keyCode}: Pitch Angle +0.5\n" +
+                    $"{settings.HeightMinus.keyCode}: Height -0.25\n" +
+                    $"{settings.HeightPlus.keyCode}: Height +0.25\n" +
+                    $"{settings.DistanceMinus.keyCode}: Distance -0.25\n" +
+                    $"{settings.DistancePlus.keyCode}: Distance +0.25\n" +
+                    $"{settings.AngleMinus.keyCode}: Pitch Angle -0.25\n" +
+                    $"{settings.AnglePlus.keyCode}: Pitch Angle +0.25\n" +
+                    $"{settings.DampingMinus.keyCode}: Height Damping -0.25\n" +
+                    $"{settings.DampingPlus.keyCode}: Height Damping +0.25\n" +
                     $"\n" +
                     $"{settings.ResetCamera.keyCode}: Reset Camera");
             }
@@ -177,7 +236,6 @@ namespace CameraMod
             {
                 return;
             }
-
             FieldInfo prop = _camera.GetType().GetField("CameraAnglesList", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (_cameraAngles==null)
             {                
@@ -255,6 +313,21 @@ namespace CameraMod
             _cameraAngles[9].distance = settings.Camera9Distance;
             _cameraAngles[9].height = settings.Camera9Height;
             _cameraAngles[9].initialPitchAngle = settings.Camera9Angle;
+
+            int camIndex = (int)_camera.CurrentCameraAngle.cameraType;
+            if(camIndex == 8)
+            {
+                _camera.heightDamping = settings.Camera8Damping;
+            }
+            else if(camIndex == 9)
+            {
+                _camera.heightDamping = settings.Camera9Damping;
+            }
+            else
+            {
+                // default is 2
+                _camera.heightDamping = 2.0f;
+            }
         }
     }
 }

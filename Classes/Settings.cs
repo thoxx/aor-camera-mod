@@ -24,38 +24,50 @@ namespace CameraMod.Classes
         /// <summary>
         /// Key bind decrease camera height
         /// </summary>
-        [Draw("Height -0.5")]
+        [Draw("Height -0.25")]
         public KeyBinding HeightMinus = new KeyBinding { keyCode = KeyCode.Keypad0 };
 
         /// <summary>
         /// Key bind increase camera height
         /// </summary>
-        [Draw("Height +0.5")]
+        [Draw("Height +0.25")]
         public KeyBinding HeightPlus = new KeyBinding { keyCode = KeyCode.Keypad1 };
 
         /// <summary>
         /// Key bind decrease camera distance
         /// </summary>
-        [Draw("Distance -0.5")]
+        [Draw("Distance -0.25")]
         public KeyBinding DistanceMinus = new KeyBinding { keyCode = KeyCode.Keypad2 };
 
         /// <summary>
         /// Key bind increase camera distance
         /// </summary>
-        [Draw("Distance +0.5")]
+        [Draw("Distance +0.25")]
         public KeyBinding DistancePlus = new KeyBinding { keyCode = KeyCode.Keypad3 };
 
         /// <summary>
         /// Key bind decrease camera angle
         /// </summary>
-        [Draw("Angle -0.5")]
+        [Draw("Angle -0.25")]
         public KeyBinding AngleMinus = new KeyBinding { keyCode = KeyCode.Keypad4 };
 
         /// <summary>
         /// Key bind increase camera angle
         /// </summary>
-        [Draw("Angle +0.5")]
+        [Draw("Angle +0.25")]
         public KeyBinding AnglePlus = new KeyBinding { keyCode = KeyCode.Keypad7 };
+
+        /// <summary>
+        /// Key bind increase height damping
+        /// </summary>
+        [Draw("Height Damping -0.25")]
+        public KeyBinding DampingMinus = new KeyBinding { keyCode = KeyCode.Keypad8 };
+
+        /// <summary>
+        /// Key bind increase height damping
+        /// </summary>
+        [Draw("Height Damping +0.25")]
+        public KeyBinding DampingPlus = new KeyBinding { keyCode = KeyCode.Keypad9 };
 
         /// <summary>
         /// Key bind reset camera settings
@@ -66,7 +78,7 @@ namespace CameraMod.Classes
         /// <summary>
         /// Camera 8 distance
         /// </summary>
-        [Header("Camera 8 (Defaults: 7.0 | 2.0 | -1.0)"), Space(15)]
+        [Header("Mod Camera 1 (Defaults: 7.0 | 2.0 | -1.0 | 4.0)"), Space(15)]
         [Draw("Distance")]
         public float Camera8Distance = 7.0f;
 
@@ -77,15 +89,21 @@ namespace CameraMod.Classes
         public float Camera8Height = 2.0f;
 
         /// <summary>
-        /// Camera 9 angle
+        /// Camera 8 angle
         /// </summary>
         [Draw("Angle")]
         public float Camera8Angle = -1.0f;
 
         /// <summary>
+        /// Camera 8 damping        
+        /// </summary>
+        [Draw("Height Damping")]
+        public float Camera8Damping = 4.0f;
+
+        /// <summary>
         /// Camera 9 distance
         /// </summary>
-        [Header("Camera 9 (Defaults: 10.0 | 3.0 | -1.5)"), Space(15)]
+        [Header("Mod Camera 2 (Defaults: 10.0 | 3.0 | -1.5 | 4.0)"), Space(15)]
         [Draw("Distance")]
         public float Camera9Distance = 10.0f;
 
@@ -100,6 +118,12 @@ namespace CameraMod.Classes
         /// </summary>
         [Draw("Angle")]
         public float Camera9Angle = -1.5f;
+
+        /// <summary>
+        /// Camera 9 damping        
+        /// </summary>
+        [Draw("Height Damping")]
+        public float Camera9Damping = 4.0f;
 
         /// <summary>
         /// Save settings
