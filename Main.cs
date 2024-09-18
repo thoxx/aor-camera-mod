@@ -168,7 +168,7 @@ namespace CameraMod
                 }
             }
             // check if camera has changed, to apply height damping to custom mod cams
-            if (_camera?.CurrentCameraAngle?.cameraType != null && ((int)_camera.CurrentCameraAngle.cameraType != lastCameryType))
+            if (ModState.IsInitalized && GameState.IsActiveRally && _camera?.CurrentCameraAngle?.cameraType != null && ((int)_camera.CurrentCameraAngle.cameraType != lastCameryType))
             {
                 int camIndex = (int)_camera.CurrentCameraAngle.cameraType;
                 modEntry.Logger.Log($"Camera switched from {lastCameryType} to {camIndex}");
