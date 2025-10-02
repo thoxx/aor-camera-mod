@@ -19,5 +19,9 @@ namespace CameraMod.Classes
         /// True if camera editor of the mod is active
         /// </summary>
         public static bool IsCameraEditor;
+        /// <summary>
+        /// True if the height damping got applied after mod got initialized
+        /// </summary>
+        public static bool IsDampingAppliedAfterModInit;
     }
 }
