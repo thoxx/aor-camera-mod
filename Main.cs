@@ -17,6 +17,8 @@ namespace CameraMod
         private static List<CameraAngle> _cameraAnglesOriginals;
         private static SceneryManager sceneryManager;
         public static Settings settings;
+        private static float _camera8Damping;
+        private static float _camera9Damping;
 
         // Send a response to the mod manager about the launch status, success or not.
         static bool Load(UnityModManager.ModEntry modEntry)
@@ -44,6 +46,7 @@ namespace CameraMod
                     modEntry.Logger.Log("Camera Mod uninitalized");
                     ModState.IsInitalized = false;
                     ModState.IsCameraEditor = false;
+                    ModState.IsDampingAppliedAfterModInit = false;
                 }
                 sceneryManager = UnityEngine.Object.FindObjectOfType<SceneryManager>();
             }
@@ -119,12 +122,28 @@ namespace CameraMod
                 {
                     _camera.heightDamping -= 0.25f;
                     isKeyPressed = true;
+                    if (camIndex == 8)
+                    {
+                        _camera8Damping = _camera.heightDamping;
+                    }
+                    else if (camIndex == 9)
+                    {
+                        _camera9Damping = _camera.heightDamping;
+                    }
                 }
                 // +Damping
                 if (Input.GetKeyUp(settings.DampingPlus.keyCode))
                 {
                     _camera.heightDamping += 0.25f;
                     isKeyPressed = true;
+                    if(camIndex == 8)
+                    {
+                        _camera8Damping = _camera.heightDamping;
+                    }
+                    else if(camIndex==9)
+                    {
+                        _camera9Damping = _camera.heightDamping;
+                    }
                 }
                 // Reset Camera
                 if (Input.GetKeyUp(settings.ResetCamera.keyCode))
@@ -154,14 +173,14 @@ namespace CameraMod
                             settings.Camera8Distance = _cameraAngles[camIndex].distance;
                             settings.Camera8Height = _cameraAngles[camIndex].height;
                             settings.Camera8Angle = _cameraAngles[camIndex].initialPitchAngle;
-                            settings.Camera8Damping = _camera.heightDamping;
+                            settings.Camera8Damping = _camera8Damping;
                             settings.Save(modEntry);
                             break;
                         case 9:
                             settings.Camera9Distance = _cameraAngles[camIndex].distance;
                             settings.Camera9Height = _cameraAngles[camIndex].height;
                             settings.Camera9Angle = _cameraAngles[camIndex].initialPitchAngle;
-                            settings.Camera8Damping = _camera.heightDamping;
+                            settings.Camera8Damping = _camera9Damping;
                             settings.Save(modEntry);
                             break;
                     }
@@ -175,10 +194,10 @@ namespace CameraMod
                 switch(camIndex)
                 {
                     case 8:
-                        _camera.heightDamping = settings.Camera8Damping;
+                        _camera.heightDamping = _camera8Damping;
                         break;
                     case 9:
-                        _camera.heightDamping = settings.Camera9Damping;
+                        _camera.heightDamping = _camera9Damping;
                         break;
                     default:
                         _camera.heightDamping = 2.0f;
@@ -186,6 +205,24 @@ namespace CameraMod
                 }
 
                 lastCameryType = (int)_camera.CurrentCameraAngle.cameraType;
+            }
+            // check if damping needs to be applied after mod got initialized
+            // this is required, because there is no cam switch detected when you play the next stage
+            if (ModState.IsInitalized && GameState.IsActiveRally && _camera?.CurrentCameraAngle?.cameraType != null && !ModState.IsDampingAppliedAfterModInit)
+            {
+                int camIndex = (int)_camera.CurrentCameraAngle.cameraType;
+                switch (camIndex)
+                {
+                    case 8:
+                        _camera.heightDamping = _camera8Damping;
+                        modEntry.Logger.Log($"Applied initial damping to camera 8");
+                        break;
+                    case 9:
+                        _camera.heightDamping = _camera9Damping;
+                        modEntry.Logger.Log($"Applied initial damping to camera 9");
+                        break;
+                }
+                ModState.IsDampingAppliedAfterModInit = true;
             }
         }
 
@@ -252,7 +289,6 @@ namespace CameraMod
             prop.SetValue(_camera, _cameraAngles);
 
             modEntry.Logger.Log("Camera Mod initalized");
-
             ModState.IsInitalized = true;
         }
 
@@ -313,21 +349,8 @@ namespace CameraMod
             _cameraAngles[9].distance = settings.Camera9Distance;
             _cameraAngles[9].height = settings.Camera9Height;
             _cameraAngles[9].initialPitchAngle = settings.Camera9Angle;
-
-            int camIndex = (int)_camera.CurrentCameraAngle.cameraType;
-            if(camIndex == 8)
-            {
-                _camera.heightDamping = settings.Camera8Damping;
-            }
-            else if(camIndex == 9)
-            {
-                _camera.heightDamping = settings.Camera9Damping;
-            }
-            else
-            {
-                // default is 2
-                _camera.heightDamping = 2.0f;
-            }
+            _camera8Damping = settings.Camera8Damping;
+            _camera9Damping = settings.Camera9Damping;
         }
     }
 }
